@@ -13,7 +13,7 @@ class ArpooneServiceProvider extends ServiceProvider
     public function boot()
     {
         // Corrected method name
-        $this->checkRequiredEnvironmentVariables();
+        $this->checkRequiredEnvirontmentVariables();
 
         // Load migrations
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
