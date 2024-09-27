@@ -20,5 +20,13 @@
             "email": "joao.ribeiro@controlink.pt"
         }
     ],
-    "minimum-stability": "stable"
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Controlink\\LaravelArpoone\\ArpooneServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
