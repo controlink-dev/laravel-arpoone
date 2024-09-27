@@ -42,9 +42,9 @@ class ArpooneServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(
-            __DIR__.'/../config/arpoone.php', 'arpoone'
-        );
+        $this->publishes([
+            __DIR__.'/config/arpoone.php' => config_path('arpoone.php'),
+        ], 'config');
     }
 
     /**
