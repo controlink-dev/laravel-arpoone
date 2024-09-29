@@ -43,7 +43,7 @@ class ArpooneServiceProvider extends ServiceProvider
     {
         // Merge the package configuration with the application's published config
         $this->mergeConfigFrom(
-            __DIR__.'/../config/arpoone.php', 'arpoone'
+            __DIR__.'/config/arpoone.php', 'arpoone'
         );
     }
 
