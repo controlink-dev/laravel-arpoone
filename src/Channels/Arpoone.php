@@ -85,6 +85,7 @@ class Arpoone
 
 
         try {
+            dd($body);
             // Send the request to Arpoone API
             $response = $this->client->post($url . 'sms/send', [
                 'headers' => $headers,
