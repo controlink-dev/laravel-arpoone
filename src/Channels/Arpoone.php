@@ -58,7 +58,7 @@ class Arpoone
         ];
 
         $body = [
-                'organization_id' => $organizationId,
+                'organizationId' => $organizationId,
                 'messages' => [$messages],
         ];
 
