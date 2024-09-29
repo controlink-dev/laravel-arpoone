@@ -55,15 +55,17 @@ class ArpooneServiceProvider extends ServiceProvider
      */
     protected function checkRequiredEnvironmentVariables(): void
     {
-        $required = [
-            'arpoone.api_key' => 'ARPOONE_API_KEY',
-            'arpoone.organization_id' => 'ARPOONE_ORGANIZATION_ID',
-            'arpoone.sender' => 'ARPOONE_SENDER',
-        ];
+        if(config('arpoone.multi_tenant', false)) {
+            $required = [
+                'arpoone.api_key' => 'ARPOONE_API_KEY',
+                'arpoone.organization_id' => 'ARPOONE_ORGANIZATION_ID',
+                'arpoone.sender' => 'ARPOONE_SENDER',
+            ];
 
-        foreach ($required as $configKey => $envVar) {
-            if (empty(config($configKey))) {
-                throw new \Exception("The environment variable $envVar is required, please add it to your .env file.");
+            foreach ($required as $configKey => $envVar) {
+                if (empty(config($configKey))) {
+                    throw new \Exception("The environment variable $envVar is required, please add it to your .env file.");
+                }
             }
         }
     }

@@ -14,12 +14,14 @@
    composer require controlink/laravel-arpoone
    ```
 2. **Publish the configuration file:**  
+
    After installation, publish the configuration file to customize the package behavior.
    ```bash
    php artisan vendor:publish --tag=arpoone-config
    ```
 
 3. **Publish the migrations (optional):**
+
     If you are using multi-tenant or want to log SMS messages, publish the migrations:
     ```bash
     php artisan vendor:publish --tag=arpoone-migrations
@@ -29,6 +31,7 @@
     php artisan migrate
     ```
 4. **Set environment variables:**
+
     If you are not using multi-tenant mode, In your `.env` file, add the necessary variables:
     ```env
     ARPOONE_API_KEY=your-api-key-here
@@ -100,13 +103,19 @@ return [
 ```
 ## Key Configuration Options:
  - url: Base URL for the Arpoone API.
- - api_key: API key for authenticating with Arpoone.
- - organization_id: Your Arpoone organization ID.
- - sender: Default sender for SMS messages.
- - verify_ssl: Option to verify SSL certificates (set to false for development).
- - multi_tenant: Set to true if your application is multi-tenant.
- - log_sms: Set to true to log sent SMS messages in the database.
- - webhooks: Set to true if you want to handle SMS status via webhooks.
+ - api_key: API key for authenticating requests.
+ - organization_id: ID of the organization sending the SMS.
+ - sender: Default sender name or number for the SMS messages.
+ - verify_ssl: Verify SSL certificates when sending requests.
+ - multi_tenant: Enable multi-tenant support.
+ - table_name: Name of the database table to store configuration settings.
+ - tenant_model: Tenant model to use for multi-tenant applications.
+ - use_tenant_column: Create a tenant column in the configuration table.
+ - tenant_column_name: Name of the column to store the tenant identifier.
+ - log_sms: Enable logging of SMS messages.
+ - sms_log_table: Name of the table to store SMS logs.
+ - sms_log_tenant_column_name: Name of the column to store the tenant identifier for SMS logs.
+ - webhooks: Enable webhooks to track SMS status.
 
 ## Usage
 ### Sending SMS Notifications
@@ -140,19 +149,19 @@ To send SMS using Laravel’s notification system, you need to define a notifica
 
 3. **Send the Notification:**
 
-In your Notifiable model (such as User), ensure that you have a method `routeNotificationForArpoone` which returns the phone number:
-```php
-public function routeNotificationForArpoone()
-{
-    return $this->phone_number;
-}
-```
-Then, to send the SMS:
-```php
-$user = User::find(1);
-$user->notify(new SendSmsNotification());
-```
-**Note:** If you do not create a `routeNotificationForArpoone` method in your Notifiable model, the package will try to use a column named `phone_number` if it exists, or it will throw an exception.
+    In your Notifiable model (such as User), ensure that you have a method `routeNotificationForArpoone` which returns the phone number:
+    ```php
+    public function routeNotificationForArpoone()
+    {
+        return $this->phone_number;
+    }
+    ```
+    Then, to send the SMS:
+    ```php
+    $user = User::find(1);
+    $user->notify(new SendSmsNotification());
+    ```
+    **Note:** If you do not create a `routeNotificationForArpoone` method in your Notifiable model, the package will try to use a column named `phone_number` if it exists, or it will throw an exception.
 
 ## Multi-Tenant Support
 If you are using multi-tenant functionality, ensure the following:
@@ -168,12 +177,16 @@ $notification->send($user, new SendSmsNotification());
 ```
 
 ## Logging SMS
-If SMS logging is enabled, set log_sms to true in the configuration. The package will log sent SMS in the database table defined in sms_log_table.
+If SMS logging is enabled, set `log_sms` to true in the configuration. The package will log sent SMS in the database table defined in `sms_log_table`.
 
 ## Webhook Support
 To track SMS statuses using webhooks, set webhooks to true in the configuration.
 The package will automatically create a route to handle the webhook and will also add the webhooks necessary to the body of the SMS sent.
 
+The possible statuses are:
+ - `pending`: The SMS is pending to be sent.
+ - `delivered`: The SMS has been delivered to the recipient.
+ - `not_delivered`: The SMS could not be delivered to the recipient.
 
 ## Error Handling
 The package throws exceptions in the following cases:
