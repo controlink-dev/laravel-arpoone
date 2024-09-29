@@ -2,18 +2,24 @@
 
 namespace Controlink\LaravelArpoone\Channels;
 
+use Controlink\LaravelArpoone\Models\ArpooneConfiguration;
+use Controlink\LaravelArpoone\Models\ArpooneSmsLog;
 use Illuminate\Notifications\Notification;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberType;
+use libphonenumber\PhoneNumberUtil;
 
 class Arpoone
 {
     protected $client;
 
-    public function __construct()
+    public function __construct($tenant_id = null)
     {
         // Initialize Guzzle client
         $this->client = new Client();
+        $this->tenant_id = $tenant_id;
     }
 
     public function send(object $notifiable, Notification $notification)
@@ -26,16 +32,36 @@ class Arpoone
         // Retrieve message data from notification
         $message = $notification->toArpoone($notifiable);
 
-        // Check if the message has the required parameters
-        if (!isset($message['to']) || !isset($message['content'])) {
-            throw new \Exception('The message must have "to" and "content" parameters.');
+        // Get the phone number from the notifiable using routeNotificationForArpoone
+        $recipientPhoneNumber = $notifiable->routeNotificationForArpoone() ?? $notifiable->phone_number;
+
+        // Ensure the recipient phone number exists
+        if (!$recipientPhoneNumber) {
+            throw new \Exception('The notifiable entity does not have a valid phone number.');
+        }
+
+        // Validate the recipient phone number
+        $recipientPhoneNumber = $this->validatePhoneNumber($recipientPhoneNumber);
+
+        // Check if the message has the required content parameter
+        if (!isset($message['content'])) {
+            throw new \Exception('The message must have a "content" parameter.');
         }
 
         // Retrieve configuration settings
-        $url = config('arpoone.url');
-        $apiKey = config('arpoone.api_key');
-        $organizationId = config('arpoone.organization_id');
-        $sender = config('arpoone.sender');
+        $configuration = null;
+        if(config('arpoone.multi_tenant', false)){
+            if(!$this->tenant_id){
+                throw new \Exception('Tenant ID is required for multi-tenant applications.');
+            }
+
+            $configuration = ArpooneConfiguration::where(config('tenant_column_name','tenant_id'), $this->tenant_id)->first();
+        }
+
+        $url = $configuration ? $configuration->url : config('arpoone.url');
+        $apiKey = $configuration ? $configuration->api_key : config('arpoone.api_key');
+        $organizationId = $configuration ? $configuration->organization_id : config('arpoone.organization_id');
+        $sender = $configuration ? $configuration->sender : config('arpoone.sender');
         $verifySsl = config('arpoone.verify_ssl', true); // Default is true
 
         // Ensure required config values are set
@@ -46,7 +72,7 @@ class Arpoone
         // Prepare the message payload
         $messages = [
             'text' => $message['content'],
-            'to' => $message['to'],
+            'to' => $recipientPhoneNumber,
             'from' => $sender,
         ];
 
@@ -92,12 +118,61 @@ class Arpoone
                 'verify' => $verifySsl,
             ]);
 
+            if(config('arpoone.log_sms', false)){
+                // Log the SMS in the database
+                foreach ($messages as $message) {
+                    $sms = ArpooneSmsLog::create([
+                        'recipient_number' => $message['to'],
+                        'message' => $message['text'],
+                        'status' => 'pending',
+                        'sent_at' => now()
+                    ]);
+
+                    if(config('arpoone.multi_tenant', false)) {
+                        $sms->tenant_id = $this->tenant_id;
+                        $sms->save();
+                    }
+                }
+            }
+
             // Return the response body
             return json_decode($response->getBody()->getContents(), true);
 
         } catch (RequestException $e) {
             // Catch and handle HTTP request errors
             throw new \Exception('Failed to send SMS: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Valida o número de telemóvel para garantir que é um número móvel válido e contém o código de país sem o "+".
+     *
+     * @param string $phoneNumber
+     * @return string
+     * @throws \Exception
+     */
+    protected function validatePhoneNumber(string $phoneNumber)
+    {
+        $phoneUtil = PhoneNumberUtil::getInstance();
+
+        try {
+            // Suponha que o código do país seja incluído no número, mas sem o "+"
+            $parsedPhoneNumber = $phoneUtil->parse($phoneNumber, null);
+
+            // Verifica se o número é válido
+            if (!$phoneUtil->isValidNumber($parsedPhoneNumber)) {
+                throw new \Exception('Invalid phone number format.');
+            }
+
+            // Verifica se o número é móvel e não uma linha fixa
+            if (!$phoneUtil->getNumberType($parsedPhoneNumber) != PhoneNumberType::MOBILE) {
+                throw new \Exception('The phone number is not a mobile number.');
+            }
+
+            // Retorna o número formatado internacionalmente (sem o "+")
+            return $phoneUtil->format($parsedPhoneNumber, PhoneNumberFormat::E164);
+        } catch (NumberParseException $e) {
+            throw new \Exception('Failed to parse phone number: ' . $e->getMessage());
         }
     }
 }

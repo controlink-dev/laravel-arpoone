@@ -36,7 +36,11 @@ class CreateArpooneSmsLogsTable extends Migration
 
                 // Adiciona coluna de tenant, se aplicável
                 if ($useTenantColumn) {
-                    $table->string($tenantColumnName)->nullable();
+                    if(!config('arpoone.tenant_model')){
+                        throw new \Exception('The tenant model is not set in the Arpoone configuration.');
+                    }
+
+                    $table->foreignIdFor(config('arpoone.tenant_model'))->constrained()->cascadeOnDelete();
                 }
 
                 // Timestamps para controle de criação e atualização

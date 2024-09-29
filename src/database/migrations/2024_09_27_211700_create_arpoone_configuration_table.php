@@ -34,12 +34,13 @@ class CreateArpooneConfigurationTable extends Migration
                 // Nome ou número do remetente
                 $table->string('sender')->nullable();
 
-                // Verificar SSL
-                $table->boolean('verify_ssl')->default(true);
-
                 // Adiciona coluna de tenant, se aplicável
                 if ($useTenantColumn) {
-                    $table->string($tenantColumnName)->nullable();
+                    if(!config('arpoone.tenant_model')){
+                        throw new \Exception('The tenant model is not set in the Arpoone configuration.');
+                    }
+
+                    $table->foreignIdFor(config('arpoone.tenant_model'))->constrained()->cascadeOnDelete();
                 }
 
                 // Timestamps para controle de criação e atualização
