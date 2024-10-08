@@ -99,6 +99,14 @@ return [
     //If true, the package will apply webhooks routes to handle the sms status
     //This is useful if you want to keep track of the sms status, and update your database accordingly
     'webhooks' => false,
+    
+    //The name of the table to store the webhook logs
+    //This is only used if the webhooks option is set to true
+    'webhook_table_name' => 'arpoone_webhook_logs',
+
+    //The name of the column to store the tenant identifier.
+    //This is only used if the multi_tenant option is set to true and the use_tenant_column option is set to true.
+    'webhook_tenant_column_name' => 'tenant_id',
 ];
 ```
 ## Key Configuration Options:
@@ -116,6 +124,8 @@ return [
  - sms_log_table: Name of the table to store SMS logs.
  - sms_log_tenant_column_name: Name of the column to store the tenant identifier for SMS logs.
  - webhooks: Enable webhooks to track SMS status.
+ - webhook_table_name: Name of the table to store webhook logs.
+ - webhook_tenant_column_name: Name of the column to store the tenant identifier for webhook logs.
 
 ## Usage
 ### Sending SMS Notifications
