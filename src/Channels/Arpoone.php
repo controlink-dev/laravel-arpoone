@@ -118,10 +118,13 @@ class Arpoone
                 'verify' => $verifySsl,
             ]);
 
+            $responseBody = json_decode($response->getBody()->getContents(), true);
+
             if(config('arpoone.log_sms', false)){
                 // Log the SMS in the database
-                foreach ($messages as $message) {
+                foreach ($messages as $key => $message) {
                     $sms = ArpooneSmsLog::create([
+                        'message_id' => $responseBody["messages"][$key]["messageId"],
                         'recipient_number' => $message['to'],
                         'message' => $message['text'],
                         'status' => 'pending',

@@ -4,7 +4,7 @@ namespace Controlink\LaravelArpoone\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ArpooneConfiguration extends Model
+class ArpooneWebhookLog extends Model
 {
     protected $table;
     protected $fillable = [];
@@ -12,24 +12,18 @@ class ArpooneConfiguration extends Model
     public function __construct(array $attributes = [])
     {
         // Set the table name dynamically from the config
-        $this->table = config('arpoone.table_name', 'arpoone_configuration');
+        $this->table = config('arpoone.webhook_table_name', 'arpoone_webhook_logs');
 
         $this->fillable = [
-            'url',
-            'api_key',
-            'organization_id',
-            'sender',
-            'verify_ssl',
-            config('arpoone.sms_log_tenant_column_name', 'tenant_id')
+            'headers',
+            'payload',
+            'ip_address',
+            config('arpoone.webhook_tenant_column_name', 'tenant_id')
         ];
 
         // Call the parent constructor
         parent::__construct($attributes);
     }
-
-    protected $casts = [
-        'verify_ssl' => 'boolean'
-    ];
 
 
     public function tenant()

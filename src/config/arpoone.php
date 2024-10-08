@@ -48,7 +48,7 @@ return [
 
     //The name of the table to store the sms logs
     //This is only used if the log_sms option is set to true
-    'sms_log_table' => 'arpoone_sms_logs',
+    'sms_log_table_name' => 'arpoone_sms_logs',
 
     //The name of the column to store the tenant identifier.
     //This is only used if the multi_tenant option is set to true and the use_tenant_column option is set to true.
@@ -57,4 +57,12 @@ return [
     //If true, the package will apply webhooks routes to handle the sms status
     //This is useful if you want to keep track of the sms status, and update your database accordingly
     'webhooks' => false,
+
+    //The name of the table to store the webhook logs
+    //This is only used if the webhooks option is set to true
+    'webhook_table_name' => 'arpoone_webhook_logs',
+
+    //The name of the column to store the tenant identifier.
+    //This is only used if the multi_tenant option is set to true and the use_tenant_column option is set to true.
+    'webhook_tenant_column_name' => 'tenant_id',
 ];

@@ -6,15 +6,26 @@ use Illuminate\Database\Eloquent\Model;
 
 class ArpooneSmsLog extends Model
 {
-    protected $table = 'arpoone_sms_logs';
+    protected $table;
+    protected $fillable = [];
 
-    protected $fillable = [
-        'recipient_number',
-        'message',
-        'status',
-        'sent_at',
-        'tenant_id'
-    ];
+    public function __construct(array $attributes = [])
+    {
+        // Set the table name dynamically from the config
+        $this->table = config('arpoone.sms_log_table_name', 'arpoone_sms_logs');
+
+        $this->fillable = [
+            'message_id',
+            'recipient_number',
+            'message',
+            'status',
+            'sent_at',
+            config('arpoone.tenant_column_name', 'tenant_id')
+        ];
+
+        // Call the parent constructor
+        parent::__construct($attributes);
+    }
 
     public function tenant()
     {

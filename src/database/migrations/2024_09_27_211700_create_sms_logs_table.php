@@ -15,12 +15,15 @@ class CreateArpooneSmsLogsTable extends Migration
     {
         // Verifique se log_sms está habilitado
         if (config('arpoone.log_sms', false)) {
-            $logTableName = config('arpoone.sms_log_table', 'arpoone_sms_logs');
+            $logTableName = config('arpoone.sms_log_table_name', 'arpoone_sms_logs');
             $useTenantColumn = config('arpoone.use_tenant_column', false);
             $tenantColumnName = config('arpoone.sms_log_tenant_column_name', 'tenant_id');
 
             Schema::create($logTableName, function (Blueprint $table) use ($useTenantColumn, $tenantColumnName) {
                 $table->id();
+
+                // ID da mensagem
+                $table->longText('message_id');
 
                 // Número do destinatário
                 $table->string('recipient_number');
