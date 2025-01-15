@@ -55,7 +55,7 @@ class Arpoone
                 throw new \Exception('Tenant ID is required for multi-tenant applications.');
             }
 
-            $configuration = ArpooneConfiguration::where(config('tenant_column_name','tenant_id'), $this->tenant_id)->first();
+            $configuration = ArpooneConfiguration::where(config('arpoone.tenant_column_name','tenant_id'), $this->tenant_id)->first();
         }
 
         $url = $configuration ? $configuration->url : config('arpoone.url');
@@ -70,11 +70,30 @@ class Arpoone
         }
 
         // Prepare the message payload
-        $messages = [
+        $message = [
             'text' => $message['content'],
             'to' => $recipientPhoneNumber,
             'from' => $sender,
         ];
+
+        //Check if webhooks are enabled
+        if(config('arpoone.webhooks', false)){
+            $message['smsWebhooks'] = [
+                "defaultUrl" => route('arpoone.webhook.sms.status'),
+                "delivered" => [
+                    "url" => route('arpoone.webhook.sms.status', ['status' => 'delivered']),
+                    "enabled" => true
+                ],
+                "not_Delivered" => [
+                    "url" => route('arpoone.webhook.sms.status', ['status' => 'not_delivered']),
+                    "enabled" => true
+                ],
+                "pending" => [
+                    "url" => route('arpoone.webhook.sms.status', ['status' => 'pending']),
+                    "enabled" => true
+                ],
+            ];
+        }
 
         // Prepare request headers
         $headers = [
@@ -85,29 +104,8 @@ class Arpoone
 
         $body = [
                 'organizationId' => $organizationId,
-                'messages' => [$messages],
+                'messages' => [$message],
         ];
-
-        //Check if webhooks are enabled
-        if(config('arpoone.webhooks', false)){
-            foreach($messages as $message){
-                $message['smsWebhooks'] = [
-                    "defaultUrl" => route('arpoone.webhook.sms.status'),
-                    "delivered" => [
-                        "url" => route('arpoone.webhook.sms.status', ['status' => 'delivered']),
-                        "enabled" => true
-                    ],
-                    "not_Delivered" => [
-                        "url" => route('arpoone.webhook.sms.status', ['status' => 'not_delivered']),
-                        "enabled" => true
-                    ],
-                    "pending" => [
-                        "url" => route('arpoone.webhook.sms.status', ['status' => 'pending']),
-                        "enabled" => true
-                    ],
-                ];
-            }
-        }
 
 
         try {
@@ -122,28 +120,38 @@ class Arpoone
 
             if(config('arpoone.log_sms', false)){
                 // Log the SMS in the database
-                foreach ($messages as $key => $message) {
-                    $sms = ArpooneSmsLog::create([
-                        'message_id' => $responseBody["messages"][$key]["messageId"],
-                        'recipient_number' => $message['to'],
-                        'message' => $message['text'],
-                        'status' => 'pending',
-                        'sent_at' => now()
-                    ]);
+                $sms = new ArpooneSmsLog();
+                $sms->fill([
+                    'message_id' => $responseBody["messages"][0]["messageId"],
+                    'recipient_number' => $message['to'],
+                    'message' => $message['text'],
+                    'status' => 'pending',
+                    'sent_at' => now()
+                ]);
 
-                    if(config('arpoone.multi_tenant', false)) {
-                        $sms->tenant_id = $this->tenant_id;
-                        $sms->save();
-                    }
+                if(config('arpoone.multi_tenant', false)) {
+                    $sms->{config('arpoone.sms_log_tenant_column_name', 'tenant_id')} = $this->tenant_id;
                 }
+                $sms->save();
+
+                return $sms;
             }
 
             // Return the response body
             return json_decode($response->getBody()->getContents(), true);
 
-        } catch (RequestException $e) {
-            // Catch and handle HTTP request errors
-            throw new \Exception('Failed to send SMS: ' . $e->getMessage());
+        }catch (RequestException $e) {
+            // Converte o conteúdo da resposta para um objeto PHP
+            $responseBody = $e->getResponse()->getBody()->getContents();
+            $decodedResponse = json_decode($responseBody);
+            // Verifica se o JSON foi decodificado corretamente
+            if (json_last_error() === JSON_ERROR_NONE && isset($decodedResponse->messages[0]->error->code)) {
+                $errorCode = $decodedResponse->messages[0]->error->code;
+                throw new \Exception('Failed to send SMS: ' . $errorCode);
+            } else {
+                // Caso algo esteja errado no JSON ou na estrutura esperada
+                throw new \Exception('Failed to send SMS: Unexpected response format');
+            }
         }
     }
 
@@ -168,12 +176,12 @@ class Arpoone
             }
 
             // Verifica se o número é móvel e não uma linha fixa
-            if (!$phoneUtil->getNumberType($parsedPhoneNumber) != PhoneNumberType::MOBILE) {
+            if ($phoneUtil->getNumberType($parsedPhoneNumber) != PhoneNumberType::MOBILE) {
                 throw new \Exception('The phone number is not a mobile number.');
             }
 
             // Retorna o número formatado internacionalmente (sem o "+")
-            return $phoneUtil->format($parsedPhoneNumber, PhoneNumberFormat::E164);
+            return preg_replace('/[^0-9]/', '', $phoneUtil->format($parsedPhoneNumber, PhoneNumberFormat::E164));
         } catch (NumberParseException $e) {
             throw new \Exception('Failed to parse phone number: ' . $e->getMessage());
         }
