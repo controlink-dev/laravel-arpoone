@@ -38,45 +38,49 @@ class ArpooneSmsLogController extends Controller
         // Log the webhook request
         // You can log the request body, headers, and other relevant information
         $request->validate([
-            'msisdn' => 'required|string',
-            'status' => 'required|string',
-            'messageId' => 'required|uuid',
-            'organizationId' => 'required|uuid',
+            '*.Msisdn' => 'required|string',
+            '*.Status' => 'required|string',
+            '*.MessageId' => 'required|uuid',
+            '*.OrganizationId' => 'required|uuid',
         ]);
 
-        //Check if multi_tenant is enabled
-        if(config('arpoone.multi_tenant', false)) {
-            $configuration = ArpooneConfiguration::where('organization_id', $request->organizationId)->firstOrFail();
-            if ($configuration) {
-                $useTenantColumn = config('arpoone.use_tenant_column', false);
-                $tenantColumnName = config('arpoone.tenant_column_name', 'tenant_id');
-                $tenantId = $useTenantColumn ? $configuration->$tenantColumnName : null;
+        // Loop through each webhook event in the array
+        foreach ($request->all() as $event) {
+            // Check if multi_tenant is enabled
+            if (config('arpoone.multi_tenant', false)) {
+                $configuration = ArpooneConfiguration::where('organization_id', $event['OrganizationId'])->firstOrFail();
+                if ($configuration) {
+                    $useTenantColumn = config('arpoone.use_tenant_column', false);
+                    $tenantColumnName = config('arpoone.tenant_column_name', 'tenant_id');
+                    $tenantId = $useTenantColumn ? $configuration->$tenantColumnName : null;
+                }
+
+                if ($useTenantColumn && !$tenantId) {
+                    throw new \Exception('Tenant ID is required for multi-tenant applications.');
+                }
+
+                $webhookLog = new ArpooneWebhookLog();
+                $webhookLog->headers = json_encode($request->header());
+                $webhookLog->payload = json_encode($event);
+                $webhookLog->ip_address = $request->ip();
+                if ($useTenantColumn) {
+                    $webhookLog->$tenantColumnName = $tenantId;
+                }
+                $webhookLog->save();
+            } else {
+                $webhookLog = new ArpooneWebhookLog();
+                $webhookLog->headers = json_encode($request->header());
+                $webhookLog->payload = json_encode($event);
+                $webhookLog->ip_address = $request->ip();
+                $webhookLog->save();
             }
 
-            if ($useTenantColumn && !$tenantId) {
-                throw new \Exception('Tenant ID is required for multi-tenant applications.');
-            }
-
-            $webhookLog = new ArpooneWebhookLog();
-            $webhookLog->headers = json_encode($request->header());
-            $webhookLog->payload = json_encode($request->all());
-            $webhookLog->ip_address = $request->ip();
-            if ($useTenantColumn) {
-                $webhookLog->$tenantColumnName = $tenantId;
-            }
-            $webhookLog->save();
-        }else{
-            $webhookLog = new ArpooneWebhookLog();
-            $webhookLog->headers = json_encode($request->header());
-            $webhookLog->payload = json_encode($request->all());
-            $webhookLog->ip_address = $request->ip();
-            $webhookLog->save();
+            // Update SMS status
+            $sms = ArpooneSmsLog::where('message_id', $event['MessageId'])->firstOrFail();
+            $sms->status = $event['Status'];
+            $sms->save();
         }
 
-        $sms = ArpooneSmsLog::where('message_id', $request->messageId)->firstOrFail();
-        $sms->status = $request->status;
-        $sms->save();
-
-        return response()->json(['message' => 'Webhook processed successfully.'], 200);
+        return response()->json(['message' => 'Webhook processed successfully.'],200);
     }
 }

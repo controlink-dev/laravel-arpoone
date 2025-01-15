@@ -79,7 +79,6 @@ class Arpoone
         //Check if webhooks are enabled
         if(config('arpoone.webhooks', false)){
             $message['smsWebhooks'] = [
-                "defaultUrl" => route('arpoone.webhook.sms.status'),
                 "delivered" => [
                     "url" => route('arpoone.webhook.sms.status', ['status' => 'delivered']),
                     "enabled" => true
@@ -90,7 +89,7 @@ class Arpoone
                 ],
                 "pending" => [
                     "url" => route('arpoone.webhook.sms.status', ['status' => 'pending']),
-                    "enabled" => true
+                    "enabled" => false
                 ],
             ];
         }
