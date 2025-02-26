@@ -4,7 +4,7 @@ namespace Controlink\LaravelArpoone\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ArpooneConfiguration extends Model
+class ArpooneEmailsLog extends Model
 {
     protected $table;
     protected $fillable = [];
@@ -12,27 +12,20 @@ class ArpooneConfiguration extends Model
     public function __construct(array $attributes = [])
     {
         // Set the table name dynamically from the config
-        $this->table = config('arpoone.table_name', 'arpoone_configuration');
+        $this->table = config('arpoone.emails_log_table', 'arpoone_emails_logs');
 
         $this->fillable = [
-            'url',
-            'api_key',
-            'organization_id',
-            'sms_sender',
-            'email_sender',
-            'email_sender_name',
-            'verify_ssl',
-            config('arpoone.sms_log_tenant_column_name', 'tenant_id')
+            'message_id',
+            'to',
+            'html_content',
+            'status',
+            'sent_at',
+            config('arpoone.tenant_column_name', 'tenant_id')
         ];
 
         // Call the parent constructor
         parent::__construct($attributes);
     }
-
-    protected $casts = [
-        'verify_ssl' => 'boolean'
-    ];
-
 
     public function tenant()
     {

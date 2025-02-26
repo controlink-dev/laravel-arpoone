@@ -59,7 +59,9 @@ class ArpooneServiceProvider extends ServiceProvider
             $required = [
                 'arpoone.api_key' => 'ARPOONE_API_KEY',
                 'arpoone.organization_id' => 'ARPOONE_ORGANIZATION_ID',
-                'arpoone.sender' => 'ARPOONE_SENDER',
+                'arpoone.sms_sender' => 'ARPOONE_SMS_SENDER',
+                'arpoone.email_sender'=> 'ARPOONE_EMAIL_SENDER',
+                'arpoone.email_sender_name'=> 'ARPOONE_EMAIL_SENDER_NAME',
             ];
 
             foreach ($required as $configKey => $envVar) {

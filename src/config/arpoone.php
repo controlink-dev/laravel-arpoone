@@ -15,8 +15,16 @@ return [
     'organization_id' => env('ARPOONE_ORGANIZATION_ID', null),
 
     // The default sender name or number for the SMS messages.
-    // You can configure this via the ARPOONE_SENDER variable in your .env file.
-    'sender' => env('ARPOONE_SENDER', null),
+    // You can configure this via the ARPOONE_SMS_SENDER variable in your .env file.
+    'sms_sender' => env('ARPOONE_SMS_SENDER', null),
+
+    // The default sender email for the Email messages.
+    // You can configure this via the ARPOONE_EMAIL_SENDER variable in your .env file.
+    'email_sender' => env('ARPOONE_EMAIL_SENDER', null),
+
+    // The default sender name for the Email messages.
+    // You can configure this via the ARPOONE_EMAIL_SENDER_NAME variable in your .env file.
+    'email_sender_name' => env('ARPOONE_EMAIL_SENDER_NAME', null),
 
     // If true, SSL certificates will be verified when sending requests to the API.
     // This is a security feature to ensure that the API connection is secure.
@@ -56,7 +64,23 @@ return [
 
     //If true, the package will apply webhooks routes to handle the sms status
     //This is useful if you want to keep track of the sms status, and update your database accordingly
-    'webhooks' => false,
+    'sms_webhooks' => false,
+
+    //If true, the package will apply webhooks routes to handle the email status
+    //This is useful if you want to keep track of the email status, and update your database accordingly
+    'email_webhooks' => false,
+
+    //If true, the sms sent will be logged in the database
+    //This is useful if you want to keep track of the sms sent
+    'log_emails' => false,
+
+    //The name of the table to store the sms logs
+    //This is only used if the log_sms option is set to true
+    'emails_log_table' => 'arpoone_emails_logs',
+
+    //The name of the column to store the tenant identifier.
+    //This is only used if the multi_tenant option is set to true and the use_tenant_column option is set to true.
+    'emails_log_tenant_column_name' => 'tenant_id',
 
     //The name of the table to store the webhook logs
     //This is only used if the webhooks option is set to true
