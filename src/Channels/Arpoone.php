@@ -5,6 +5,7 @@ namespace Controlink\LaravelArpoone\Channels;
 use Controlink\LaravelArpoone\Models\ArpooneConfiguration;
 use Controlink\LaravelArpoone\Models\ArpooneEmailsLog;
 use Controlink\LaravelArpoone\Models\ArpooneSmsLog;
+use Dflydev\DotAccessData\Data;
 use Illuminate\Notifications\Notification;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -251,12 +252,12 @@ class Arpoone
             }
 
             // Verifica se o número é móvel e não uma linha fixa
-            if (!$phoneUtil->getNumberType($parsedPhoneNumber) != PhoneNumberType::MOBILE) {
+            if ($phoneUtil->getNumberType($parsedPhoneNumber) != PhoneNumberType::MOBILE) {
                 throw new \Exception('The phone number is not a mobile number.');
             }
 
             // Retorna o número formatado internacionalmente (sem o "+")
-            return $phoneUtil->format($parsedPhoneNumber, PhoneNumberFormat::E164);
+            return str_replace('+', '', $phoneUtil->format($parsedPhoneNumber, PhoneNumberFormat::E164));
         } catch (NumberParseException $e) {
             throw new \Exception('Failed to parse phone number: ' . $e->getMessage());
         }
@@ -319,11 +320,13 @@ class Arpoone
                 'verify' => $verify_ssl,
             ]);
 
+            $responseJson = json_decode($response->getBody()->getContents(), true);
+
             if($type == 'sms' && config('arpoone.log_sms', false)){
                 // Log the SMS in the database
                 $sms = new ArpooneSmsLog();
                 $sms->fill([
-                    'message_id' => $response["messages"][0]["messageId"],
+                    'message_id' => $responseJson["messages"][0]["messageId"],
                     'recipient_number' => $payload['messages'][0]['to'],
                     'message' => $payload['messages'][0]['text'],
                     'status' => 'pending',
@@ -342,7 +345,7 @@ class Arpoone
                 // Log the Email in the database
                 $email = new ArpooneEmailsLog();
                 $email->fill([
-                    'message_id' => $response["messages"][0]["messageId"],
+                    'message_id' => $responseJson["messages"][0]["messageId"],
                     'to' => $payload['messages'][0]['to'],
                     'html_content' => $payload['messages'][0]['htmlContent'],
                     'status' => 'pending',
@@ -360,7 +363,7 @@ class Arpoone
 
 
             // Return the response body
-            return json_decode($response->getBody()->getContents(), true);
+            return $responseJson;
 
         } catch (RequestException $e) {
             // Converte o conteúdo da resposta para um objeto PHP

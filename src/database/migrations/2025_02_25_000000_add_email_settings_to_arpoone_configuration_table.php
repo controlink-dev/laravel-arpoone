@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class UpdateSMSSettingsToArpooneConfigurationTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -19,7 +19,8 @@ class UpdateSMSSettingsToArpooneConfigurationTable extends Migration
 
             if(Schema::hasTable($tableName)){
                 Schema::table($tableName, function (Blueprint $table) {
-                    $table->renameColumn('sender', 'sms_sender');
+                    $table->string('email_sender_name')->nullable()->after('sms_sender');
+                    $table->string('email_sender_email')->nullable()->after('email_sender_name');
                 });
             }
         }
@@ -38,9 +39,10 @@ class UpdateSMSSettingsToArpooneConfigurationTable extends Migration
 
             if(Schema::hasTable($tableName)){
                 Schema::table($tableName, function (Blueprint $table) {
-                    $table->renameColumn('sms_sender', 'sender');
+                    $table->dropColumn('email_sender_name');
+                    $table->dropColumn('email_sender_email');
                 });
             }
         }
     }
-}
+};
