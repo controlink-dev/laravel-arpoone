@@ -330,6 +330,7 @@ class Arpoone
                     'recipient_number' => $payload['messages'][0]['to'],
                     'message' => $payload['messages'][0]['text'],
                     'status' => 'pending',
+                    'cost' => $responseJson["messages"][0]["cost"],
                     'sent_at' => now()
                 ]);
 
