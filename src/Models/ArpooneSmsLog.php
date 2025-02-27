@@ -20,6 +20,7 @@ class ArpooneSmsLog extends Model
             'message',
             'status',
             'sent_at',
+            'cost',
             config('arpoone.tenant_column_name', 'tenant_id')
         ];
 
