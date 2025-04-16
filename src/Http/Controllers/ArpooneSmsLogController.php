@@ -8,6 +8,7 @@ use Controlink\LaravelArpoone\Models\ArpooneWebhookLog;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 
 class ArpooneSmsLogController extends Controller
 {
@@ -37,6 +38,7 @@ class ArpooneSmsLogController extends Controller
 
         // Log the webhook request
         // You can log the request body, headers, and other relevant information
+        Log::info('ARPOONE: Webbook request received, data: ' . json_encode($request->all()));
         $request->validate([
             '*.Msisdn' => 'required|string',
             '*.Status' => 'required|string',
@@ -56,6 +58,7 @@ class ArpooneSmsLogController extends Controller
                 }
 
                 if ($useTenantColumn && !$tenantId) {
+                    Log::error('ARPOONE: Tenant ID is required for multi-tenant applications.');
                     throw new \Exception('Tenant ID is required for multi-tenant applications.');
                 }
 
@@ -77,7 +80,7 @@ class ArpooneSmsLogController extends Controller
 
             // Update SMS status
             $sms = ArpooneSmsLog::where('message_id', $event['MessageId'])->firstOrFail();
-            $sms->status = $event['Status'];
+            $sms->status = $status;
             $sms->save();
         }
 

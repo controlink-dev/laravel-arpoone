@@ -101,7 +101,7 @@ class Arpoone
                     "url" => route('arpoone.webhook.sms.status', ['status' => 'delivered']),
                     "enabled" => true
                 ],
-                "not_Delivered" => [
+                "not_delivered" => [
                     "url" => route('arpoone.webhook.sms.status', ['status' => 'not_delivered']),
                     "enabled" => true
                 ],
