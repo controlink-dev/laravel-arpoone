@@ -9,6 +9,7 @@ use Dflydev\DotAccessData\Data;
 use Illuminate\Notifications\Notification;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Controlink\LaravelArpoone\Exceptions\ArpooneRequestException;
 use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberFormat;
 use libphonenumber\PhoneNumberType;
@@ -370,14 +371,15 @@ class Arpoone
             // Converte o conteúdo da resposta para um objeto PHP
             $responseBody = $e->getResponse()->getBody()->getContents();
             $decodedResponse = json_decode($responseBody);
+
             // Verifica se o JSON foi decodificado corretamente
             if (json_last_error() === JSON_ERROR_NONE && isset($decodedResponse->messages[0]->error->code)) {
                 $errorCode = $decodedResponse->messages[0]->error->code;
-                throw new \Exception('Failed to send '. $type .': ' . $errorCode);
-            } else {
-                // Caso algo esteja errado no JSON ou na estrutura esperada
-                throw new \Exception('Failed to send ' . $type . ': Unexpected response format');
+                throw new ArpooneRequestException('Failed to send ' . $type . ': ' . $errorCode, $errorCode);
             }
+
+            // Caso algo esteja errado no JSON ou na estrutura esperada
+            throw new ArpooneRequestException('Failed to send ' . $type . ': Unexpected response format');
         }
     }
 
