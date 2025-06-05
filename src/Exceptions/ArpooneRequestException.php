@@ -14,7 +14,7 @@ class ArpooneRequestException extends Exception
      */
     protected ?int $arpooneErrorCode;
 
-    public function __construct(string $message = "", ?int $errorCode = null, int $code = 0, ?Exception $previous = null)
+    public function __construct(string $message = "", ?string $errorCode = null, int $code = 0, ?Exception $previous = null)
     {
         $this->arpooneErrorCode = $errorCode;
         parent::__construct($message, $code, $previous);
