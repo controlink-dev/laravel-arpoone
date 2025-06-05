@@ -305,4 +305,17 @@ The package throws exceptions in the following cases:
  - Invalid or missing phone number or email address.
  - SMS sending failures.
  - Email sending failures.
- - Ensure you handle exceptions appropriately in your application.
+
+When an SMS or Email fails to send, the package throws an `ArpooneRequestException`.
+You can obtain the code returned by the API using the `getArpooneErrorCode()` method:
+
+```php
+try {
+    $user->notify(new SomeNotification());
+} catch (\Controlink\LaravelArpoone\Exceptions\ArpooneRequestException $e) {
+    $code = $e->getArpooneErrorCode();
+    // Handle the code or message as needed
+}
+```
+
+Ensure you handle exceptions appropriately in your application.
