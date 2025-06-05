@@ -12,7 +12,7 @@ class ArpooneRequestException extends Exception
     /**
      * Error code returned by the Arpoone API.
      */
-    protected ?int $arpooneErrorCode;
+    protected ?string $arpooneErrorCode;
 
     public function __construct(string $message = "", ?string $errorCode = null, int $code = 0, ?Exception $previous = null)
     {
@@ -23,7 +23,7 @@ class ArpooneRequestException extends Exception
     /**
      * Get the error code returned by the Arpoone API.
      */
-    public function getArpooneErrorCode(): ?int
+    public function getArpooneErrorCode(): ?string
     {
         return $this->arpooneErrorCode;
     }
