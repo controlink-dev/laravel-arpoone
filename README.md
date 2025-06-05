@@ -318,4 +318,15 @@ try {
 }
 ```
 
+If you call the channel directly via `send()`, catch the exception in the same way:
+
+```php
+$channel = new \Controlink\LaravelArpoone\Channels\Arpoone($tenantId);
+try {
+    $channel->send($user, new SomeNotification());
+} catch (\Controlink\LaravelArpoone\Exceptions\ArpooneRequestException $e) {
+    $code = $e->getArpooneErrorCode();
+    // Handle the code or message as needed
+}
+```
 Ensure you handle exceptions appropriately in your application.
